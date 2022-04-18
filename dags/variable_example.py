@@ -5,6 +5,7 @@ import pendulum
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python_operator import PythonOperator
+from airflow.models import Variable
 
 
 def print_hello():
@@ -15,6 +16,8 @@ def read_json():
     global json_config
     with open('/home/shvardhan/airflow/conf/config1.json') as json_fp:
         json_config = json.load(json_fp)
+        for k, v in json_config.items():
+            Variable.set(k, v)
 
 
 read_json()
@@ -33,7 +36,10 @@ with DAG(
 
     get_variables = BashOperator(
         task_id='get_variables',
-        bash_command='echo Username : {} , Email : {}'.format(json_config.get("username"),
-                                                              json_config.get("email")),
+        # bash_command='echo Username : {} , Email : {}'.format(json_config.get("username"),
+        #                                                       json_config.get("email")),
+        bash_command='echo Username : {} , Email : {}'.format(Variable.get("username"),
+                                                              Variable.get("email")),
     )
+
     print_hello >> get_variables
